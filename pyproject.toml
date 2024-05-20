@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "fireworksbench"
+version = "0.1.0"
+description = ""
+authors = ["Utkarsha Gupte <guptesutkarsha@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+aiohttp = "^3.9.5"
+requests = "^2.31.0"
+gevent = "^24.2.1"
+pydantic = "^2.7.1"
+config = "^0.5.1"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.10.0"
+ruff = "^0.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.ruff]
+exclude = [
+  "tests/integration_tests/examples/non-utf8-encoding.py",
+]
+
+[tool.ruff.lint]
+select = [
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "I",  # isort
+  "T201", # print
+]
+ignore = ['E501']
+
+[tool.mypy]
+strict="True"
