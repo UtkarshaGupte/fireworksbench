@@ -1,7 +1,7 @@
 import asyncio
 import time
 from collections import defaultdict, deque
-from typing import Deque, Optional
+from typing import Deque, Dict, Optional
 
 import aiohttp
 from pydantic import BaseModel, Field, field_validator
@@ -21,8 +21,13 @@ class LoadTester(BaseModel):
         duration (int): Duration of the test in seconds.
         qps (Optional[int]): Queries per second. Defaults to config.DEFAULT_QPS.
         concurrency (int): Number of concurrent threads. Defaults to config.DEFAULT_CONCURRENCY.
-        results (DefaultDict[int, Deque[float]]): A dictionary mapping response codes to a deque of response times.
-        errors (DefaultDict[int, Deque[str]]): A dictionary mapping response codes to a deque of error messages.
+        http_method (str): The HTTP method to use for requests. Defaults to "GET".
+        headers (Optional[Dict[str, str]]): Custom headers to include in requests.
+        payload (Optional[Dict[str, Any]]): Payload for POST/PUT requests.
+        timeout (float): Timeout for each request in seconds.
+        retries (int): Number of retries for failed requests.
+        results (DefaultDict[str, Deque[float]]): A dictionary mapping response codes to a deque of response times.
+        errors (DefaultDict[str, Deque[str]]): A dictionary mapping response codes to a deque of error messages.
         start_time (Optional[float]): The start time of the test. Initially None.
         end_time (Optional[float]): The end time of the test. Initially None.
         lock (asyncio.Lock): A lock for synchronizing access to shared resources.
@@ -38,10 +43,11 @@ class LoadTester(BaseModel):
         default=config.DEFAULT_CONCURRENCY, description="Number of concurrent threads."
     )
 
-    # http_method: str = Field(default="GET", description="HTTP method to use.")
-    # headers: Optional[Dict[str, str]] = Field(default=None, description="Custom headers to include in requests.")
-    # payload: Optional[Dict[str, str]] = Field(default=None, description="Payload for POST/PUT requests.")
-
+    http_method: str = Field(default="GET", description="HTTP method to use.")
+    headers: Optional[Dict[str, str]] = Field(default=None, description="Custom headers to include in requests.")
+    payload: Optional[Dict[str, str]] = Field(default=None, description="Payload for POST/PUT requests.")
+    timeout: float = Field(default=10.0, description="Timeout for each request in seconds.")
+    retries: int = Field(default=3, description="Number of retries for failed requests.")
 
     start_time: Optional[float] = None
     end_time: Optional[float] = None
@@ -102,20 +108,33 @@ class LoadTester(BaseModel):
             start_time = time.time()
 
             try:
-                async with session.get(self.url) as response:
-                    await response.text()
-                    status_code = response.status
-                    status_group = str(status_code // 100) + "XX"
-                    request_time = time.time() - start_time
+                for _ in range(self.retries + 1):
+                    try:
 
-                    await self._record_result(status_group, request_time)
+                        async with session.request(
+                                    method=self.http_method,
+                                    url=self.url,
+                                    headers=self.headers,
+                                    json=self.payload,
+                                    timeout=self.timeout
+                                ) as response:
+                            await response.text()
+                            status_code = response.status
+                            status_group = str(status_code // 100) + "XX"
+                            request_time = time.time() - start_time
+
+                            await self._record_result(status_group, request_time)
+
+                    except aiohttp.ClientError as e:
+                        if _ == self.retries:
+                            raise e
+                        await asyncio.sleep(1)  # Exponential backoff could be implemented here
             except Exception as e:
                 await self._record_error(e)# Assuming status code 500 for simplicity
 
             elapsed_time = time.time() - start_time
             remaining_delay = delay - elapsed_time
             if remaining_delay > 0:
-                # time.sleep(remaining_delay)
                 await asyncio.sleep(remaining_delay)
 
             # Log for debugging
