@@ -9,8 +9,6 @@ from pydantic import BaseModel, Field, field_validator
 import config
 from libs.log_format import get_logger
 
-logger = get_logger(__name__)
-
 
 class LoadTester(BaseModel):
     """
@@ -32,6 +30,7 @@ class LoadTester(BaseModel):
         end_time (Optional[float]): The end time of the test. Initially None.
         lock (asyncio.Lock): A lock for synchronizing access to shared resources.
         logger (logging.Logger): A logger instance for logging messages.
+        output (str): File path to save the test results. Defaults to "output/fireworksbench_results.log".
     """
 
     url: str = Field(..., description="The target URL to test.")
@@ -48,7 +47,8 @@ class LoadTester(BaseModel):
     payload: Optional[Dict[str, str]] = Field(default=None, description="Payload for POST/PUT requests.")
     timeout: float = Field(default=10.0, description="Timeout for each request in seconds.")
     retries: int = Field(default=3, description="Number of retries for failed requests.")
-
+    output: str = Field(
+        default=config.LOG_FILE, description="File path to save the test results.")
     start_time: Optional[float] = None
     end_time: Optional[float] = None
     total_time: Optional[float] = None
@@ -73,8 +73,11 @@ class LoadTester(BaseModel):
         """
         Starts the load test by spawning threads to send requests.
         """
+        logger = get_logger(__name__, self.output)
         logger.info(
-            f"Starting test: URL={self.url}, duration={self.duration}s, QPS={self.qps}, concurrency={self.concurrency}"
+            f"Starting test: URL={self.url}, duration={self.duration}s, QPS={self.qps}, concurrency={self.concurrency}, "
+            f"HTTP method={self.http_method}, headers={self.headers}, payload={self.payload}, "
+            f"timeout={self.timeout}, retries={self.retries}, output={self.output}"
         )
 
         self.start_time = time.time()
@@ -137,10 +140,11 @@ class LoadTester(BaseModel):
             if remaining_delay > 0:
                 await asyncio.sleep(remaining_delay)
 
+            
             # Log for debugging
-            logger.debug(
-                f"Requests sent: {len(self.results)}, Errors: {len(self.errors)}"
-            )
+            # logger.debug(
+            #     f"Requests sent: {len(self.results)}, Errors: {len(self.errors)}"
+            # )
 
     async def _record_result(self, status_group: str, request_time: float) -> None:
         """

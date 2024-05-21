@@ -5,8 +5,6 @@ from typing import List, Tuple
 from libs.load_tester import LoadTester
 from libs.log_format import get_logger
 
-logger = get_logger(__name__)
-
 RunStats = namedtuple(
     "RunStats",
     [
@@ -116,6 +114,7 @@ class logResult:
 
     @staticmethod
     def _log_results(load_tester: LoadTester, total_calls: int, error_rate: float, rps: int, rpm: int, avg_latency: float, min_latency: float, max_latency: float, amp: float, stdev: float) -> None:
+        logger = get_logger(__name__, load_tester.output)
         logger.info(f"Total calls: {total_calls}")
         for status_group, values in load_tester.results.items():
             logger.info(f"{status_group} responses: {len(values)}")

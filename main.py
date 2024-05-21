@@ -71,9 +71,17 @@ def main() -> None:
         payload = json.loads(args.payload)
 
     load_tester = LoadTester(
-        url=args.url, duration=args.duration, qps=args.qps, concurrency=args.concurrency,http_method=args.method,
+        url=args.url, 
+        duration=args.duration, 
+        qps=args.qps, 
+        concurrency=args.concurrency,
+        http_method=args.method,
         headers=headers,
-        payload=payload
+        payload=payload,
+        timeout=args.timeout,
+        retries=args.retries,
+        output=args.output
+
     )
     asyncio.run(load_tester.run_test())
     logResult.report_results(load_tester)
