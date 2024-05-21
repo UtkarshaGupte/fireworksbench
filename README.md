@@ -132,4 +132,6 @@ Once you have made your changes and tested them locally, you can commit your cha
 
 By following these steps, you can set up FireworksBench for local development and contribute to the project or use it for testing and experimentation.
 
+## Note To Reviewer 
 
+Added some explanation regarding the choice of current implementation vs an alternative approach in the [Note to Reviewer file](note_to_reviewer.md).
