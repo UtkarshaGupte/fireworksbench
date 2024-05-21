@@ -3,7 +3,7 @@ import logging
 import config
 
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: str, logfile: str) -> logging.Logger:
     """
     Create and configure a logger with the given name.
 
@@ -15,7 +15,7 @@ def get_logger(name: str) -> logging.Logger:
     """
     # Configure logging
     logging.basicConfig(
-        filename=config.LOG_FILE, filemode="a", format=config.LOG_FORMAT
+        filename=logfile, filemode="a", format=config.LOG_FORMAT
     )
     logger = logging.getLogger(name)
     logger.setLevel(level=logging.INFO)
