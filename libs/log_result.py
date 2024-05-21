@@ -31,26 +31,33 @@ class logResult:
         Returns:
             RunStats: A named tuple containing the run statistics.
         """
+        # Initialize variables to store results and errors
         all_res: List[float] = []
         total_requests, successful_calls = 0, 0
 
+        # Collect results and count total requests and successful calls
         total_requests, successful_calls, all_res = logResult._collect_results(load_tester)
 
+        # Count total errors
         total_errors = logResult._collect_errors(load_tester)
+        
+        # Calculate total calls and error rate
         total_calls = total_requests + total_errors
-
         error_rate = logResult._calculate_error_rate(total_calls, successful_calls)
 
+        # Calculate total time of the load test
         load_tester.total_time = logResult._calculate_total_time(load_tester)
 
+        # Calculate various statistics
         cum_time = sum(all_res)
-
         rps, rpm, avg_latency, min_latency, max_latency, amp, stdev = logResult._calculate_statistics(
             load_tester, all_res, cum_time, total_requests
         )
 
+        # Log the results
         logResult._log_results(load_tester, total_calls, error_rate, rps, rpm, avg_latency, min_latency, max_latency, amp, stdev)
 
+        # Return the run statistics as a named tuple
         return RunStats(
             total_requests,
             load_tester.total_time,
@@ -123,10 +130,14 @@ class logResult:
         logger.info(f"Error Rate: {error_rate * 100:.2f}%")
 
         logger.info(f"Total Duration: {load_tester.total_time:.4f} s")
-        logger.info(f"Average Latency: {avg_latency:.4f} s")
-        logger.info(f"Minimum Latency: {min_latency:.4f} s")
-        logger.info(f"Maximum Latency: {max_latency:.4f} s")
-        logger.info(f"Amplitude: {amp:.4f} s")
-        logger.info(f"Standard deviation: {stdev:.6f}")
+        logger.info(f"Average Latency: {avg_latency:.2f} s")
+        logger.info(f"Minimum Latency: {min_latency:.2f} s")
+        logger.info(f"Maximum Latency: {max_latency:.2f} s")
+        logger.info(f"Amplitude: {amp:.2f} s")
+        logger.info(f"Standard deviation: {stdev:.2f}")
         logger.info(f"Queries Per Second: {rps:.2f}")
         logger.info(f"Queries Per Minute: {rpm:.2f}")
+
+    # NOTE - I used static methods to centralize the configuration of logging settings, such as log levels, log file locations, 
+    # or log formats, within the log class itself. This allows to manage and modify the logging configuration in one place, 
+    # rather than having to update multiple instances of the log class.

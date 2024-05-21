@@ -79,3 +79,57 @@ python main.py <target_url> --duration <duration_seconds> --qps <queries_per_sec
 Replace <target_url>, <duration_seconds>, <queries_per_second>, <concurrency_level>, <http_method>, <custom_headers_json>, <payload_json>, <timeout_seconds>, <num_retries>, and <output_file> with your desired values.
 
 
+## Local Development
+
+To run it locally for development purposes, follow these steps:
+
+1. Clone the repository
+```bash
+git clone https://github.com/UtkarshaGupte/fireworksbench.git
+```
+
+2. Navigate to the Project Directory:
+```bash
+cd fireworksbench
+```
+
+3. Install Poetry
+
+FireworksBench uses Poetry for dependency management. If you don't have Poetry installed already, you can install it using pip:
+
+```bash
+pip install poetry
+```
+
+4. Install Project Dependencies:
+```bash
+poetry install
+```
+
+This command installs the project dependencies specified in the pyproject.toml file using Poetry. The --dev flag is omitted because development dependencies are necessary for local development.
+
+5. Activate the Virtual Environment:
+```bash
+poetry shell
+```
+
+This command activates the virtual environment created by Poetry. Activating the virtual environment ensures that you're using the correct dependencies and environment settings for the project.
+
+6. Start Developing:
+
+Now that you have set up the project locally, you can start contributing or making changes to the codebase. You can run tests, make changes to the code, and run the application locally for testing and development purposes.
+
+7. Run Tests:
+```bash
+pytest
+```
+
+FireworksBench uses pytest for testing. You can run the tests to ensure that your changes haven't introduced any regressions and that the existing functionality is working as expected.
+
+8. Make Changes and Commit:
+
+Once you have made your changes and tested them locally, you can commit your changes to your local repository and push them to GitHub if you're working on a fork or a branch.
+
+By following these steps, you can set up FireworksBench for local development and contribute to the project or use it for testing and experimentation.
+
+
