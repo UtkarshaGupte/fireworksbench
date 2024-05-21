@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 
+import config
 from libs.load_tester import LoadTester
 from libs.log_result import logResult
 
@@ -53,6 +54,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output",
+        default=config.LOG_FILE,
         type=str,
         help="File to save test results",
     )
