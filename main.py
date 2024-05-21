@@ -22,13 +22,58 @@ def main() -> None:
         help="Number of concurrent requests (default: 10)",
     )
     parser.add_argument(
-        "--build-docker", action="store_true", help="Build Docker image"
+        "--method",
+        type=str,
+        default="GET",
+        choices=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        help="HTTP method to use (default: GET)",
+    )
+    parser.add_argument(
+        "--headers",
+        type=str,
+        help="Custom headers in JSON format",
+    )
+    parser.add_argument(
+        "--payload",
+        type=str,
+        help="Payload for POST/PUT requests in JSON format",
     )
 
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=10.0,
+        help="Timeout for each request in seconds (default: 10.0)",
+    )
+    parser.add_argument(
+        "--retries",
+        type=int,
+        default=3,
+        help="Number of retries for failed requests (default: 3)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        help="File to save test results",
+    )
+    
     args = parser.parse_args()
 
+    headers = None
+    payload = None
+
+    if args.headers:
+        import json
+        headers = json.loads(args.headers)
+    
+    if args.payload:
+        import json
+        payload = json.loads(args.payload)
+
     load_tester = LoadTester(
-        url=args.url, duration=args.duration, qps=args.qps, concurrency=args.concurrency
+        url=args.url, duration=args.duration, qps=args.qps, concurrency=args.concurrency,http_method=args.method,
+        headers=headers,
+        payload=payload
     )
     asyncio.run(load_tester.run_test())
     logResult.report_results(load_tester)

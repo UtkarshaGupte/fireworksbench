@@ -89,10 +89,11 @@ async def test_send_requests(load_tester: LoadTester) -> None:
 
     # Mock the aiohttp ClientSession
     mock_session = MagicMock()
-    mock_session.get.return_value = mock_response
+    mock_session.request.return_value = mock_response
 
     # Patch the aiohttp.ClientSession and execute the send_requests method
-    with patch("aiohttp.ClientSession", return_value=mock_session):
+    with patch("aiohttp.ClientSession") as mock_client_session:
+        mock_client_session.return_value.__aenter__.return_value = mock_session
         await lt._send_requests(mock_session, lt.end_time)
 
     # Assertion
@@ -119,10 +120,11 @@ async def test_send_requests_with_error(load_tester: LoadTester) -> None:
 
     # Mock the aiohttp ClientSession
     mock_session = MagicMock()
-    mock_session.get.return_value = mock_response
+    mock_session.request.return_value = mock_response
 
     # Patch the aiohttp.ClientSession and execute the send_requests method
-    with patch("aiohttp.ClientSession", return_value=mock_session):
+    with patch("aiohttp.ClientSession") as mock_client_session:
+        mock_client_session.return_value.__aenter__.return_value = mock_session
         await lt._send_requests(mock_session, lt.end_time)
 
     # Assertion
@@ -134,10 +136,18 @@ async def test_high_qps() -> None:
     """
     Test case to verify behavior when the qps (Queries per second) is very high.
 
-    It sets up a LoadTester instance with a high qps value, mocks the HTTP GET requests,
+    It sets up a LoadTester instance with a high qps value, mocks the HTTP requests,
     and checks if the results contain successful responses (2XX).
     """
-    lt = LoadTester(url="http://example.com", duration=10, qps=10000, concurrency=2)
+    lt = LoadTester(
+        url="http://example.com",
+        duration=10,
+        qps=10000,
+        concurrency=2,
+        http_method="GET",
+        headers={"Content-Type": "application/json"},
+        payload=None
+    )
     lt.start_time = time.time()
     lt.end_time = lt.start_time + 1
 
@@ -148,13 +158,13 @@ async def test_high_qps() -> None:
     mock_response.__aexit__.return_value = False
 
     mock_session = MagicMock()
-    mock_session.get.return_value = mock_response
+    mock_session.request.return_value = mock_response
 
-    with patch("aiohttp.ClientSession", return_value=mock_session):
+    with patch("aiohttp.ClientSession") as mock_client_session:
+        mock_client_session.return_value.__aenter__.return_value = mock_session
         await lt._send_requests(mock_session, lt.end_time)
 
     assert len(lt.results["2XX"]) > 0
-
 
 @pytest.mark.asyncio
 async def test_max_concurrency() -> None:
@@ -178,9 +188,10 @@ async def test_max_concurrency() -> None:
     mock_response.__aexit__.return_value = False
 
     mock_session = MagicMock()
-    mock_session.get.return_value = mock_response
+    mock_session.request.return_value = mock_response
 
-    with patch("aiohttp.ClientSession", return_value=mock_session):
+    with patch("aiohttp.ClientSession") as mock_client_session:
+        mock_client_session.return_value.__aenter__.return_value = mock_session
         await lt._send_requests(mock_session, lt.end_time)
 
     assert len(lt.results["2XX"]) > 0
@@ -231,3 +242,96 @@ def test_zero_qps_validation() -> None:
         LoadTester(url="http://example.com", duration=10, qps=0, concurrency=2)
 
     assert "Value must be positive" in str(exc_info.value)
+
+# Test case for HTTP method
+@pytest.mark.asyncio
+async def test_http_method(load_tester: LoadTester) -> None:
+    """
+    Test case to verify that the correct HTTP method is used for requests.
+    """
+
+    lt = LoadTester(
+        url="http://amazon.in",
+        duration=5,
+        qps=10,
+        concurrency=2,
+        http_method="GET",  # Set the HTTP method explicitly for this test
+        headers=None,       # Set headers to None explicitly for this test
+        payload=None,       # Set payload to None explicitly for this test
+        timeout=10          # Set timeout to 10 explicitly for this test
+    )
+    
+    lt.start_time = time.time()
+    lt.end_time = lt.start_time + 1  # Set short end time for the test
+
+    # Mock the response from the HTTP POST request
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.text.return_value = "OK"
+    mock_response.__aenter__.return_value = mock_response
+    mock_response.__aexit__.return_value = False
+
+    mock_session = MagicMock()
+    mock_session.request.return_value = mock_response
+
+    with patch("aiohttp.ClientSession") as mock_client_session:
+        mock_client_session.return_value.__aenter__.return_value = mock_session
+        await lt._send_requests(mock_session, lt.end_time)
+
+    # Check if the request method was called with the correct parameters for each call
+    expected_call = call(
+        method=lt.http_method,  # Check if correct HTTP method is used
+        url=lt.url,
+        headers=lt.headers,
+        json=None,
+        timeout=lt.timeout, 
+    )
+
+    # Retrieve all calls made to the request method
+    actual_calls = mock_session.request.call_args_list
+
+    # Ensure that each call matches the expected parameters
+    for actual_call in actual_calls:
+        assert actual_call == expected_call, f"Unexpected call: {actual_call}"
+
+
+# Test case for payload and headers
+@pytest.mark.asyncio
+async def test_payload() -> None:
+    """
+    Test case to check if the payload and headers are properly included in POST/PUT requests.
+    """
+    # Redefine the load_tester fixture with additional parameters
+    lt = LoadTester(
+        url="http://amazon.in",
+        duration=5,
+        qps=10,
+        concurrency=2,
+        http_method="POST",  # Set the HTTP method to POST
+        headers={"Authorization": "Bearer token"},        
+        payload={"key": "value"}  # Set the payload data
+    )
+
+    lt.start_time = time.time()
+    lt.end_time = lt.start_time + 1  # Set short end time for the test
+
+    # Mock the response from the HTTP POST request
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.text.return_value = "OK"
+    mock_response.__aenter__.return_value = mock_response
+    mock_response.__aexit__.return_value = False
+
+    mock_session = MagicMock()
+    mock_session.request.return_value = mock_response
+
+    with patch("aiohttp.ClientSession") as mock_client_session:
+        mock_client_session.return_value.__aenter__.return_value = mock_session
+        await lt._send_requests(mock_session, lt.end_time)
+
+    # Retrieve all calls made to the request method
+    actual_calls = mock_session.request.call_args_list
+
+    # Ensure that each call has the correct payload
+    for actual_call in actual_calls:
+        assert actual_call.kwargs["json"] == lt.payload, "Payload mismatch in the request"
