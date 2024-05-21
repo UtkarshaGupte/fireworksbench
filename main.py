@@ -2,9 +2,10 @@ import argparse
 import asyncio
 
 from libs.load_tester import LoadTester
+from libs.log_result import logResult
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="HTTP Load Tester")
     parser.add_argument("url", help="Target URL")
     parser.add_argument(
@@ -30,7 +31,7 @@ def main():
         url=args.url, duration=args.duration, qps=args.qps, concurrency=args.concurrency
     )
     asyncio.run(load_tester.run_test())
-    load_tester.report_results()
+    logResult.report_results(load_tester)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,6 @@ readme = "README.md"
 python = "^3.12"
 aiohttp = "^3.9.5"
 requests = "^2.31.0"
-gevent = "^24.2.1"
 pydantic = "^2.7.1"
 config = "^0.5.1"
 
@@ -18,15 +17,14 @@ config = "^0.5.1"
 mypy = "^1.10.0"
 ruff = "^0.4.4"
 
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.1"
+pytest-asyncio = "^0.23.7"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-
-[tool.ruff]
-exclude = [
-  "tests/integration_tests/examples/non-utf8-encoding.py",
-]
 
 [tool.ruff.lint]
 select = [
