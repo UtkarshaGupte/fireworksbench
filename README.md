@@ -37,7 +37,15 @@ cd fireworksbench
 pip install poetry
 ```
 
-4. Install Project Dependencies:
+4. Activate the Virtual Environment:
+```bash
+poetry shell
+```
+
+This command activates the virtual environment created by Poetry. Activating the virtual environment ensures that you're using the correct dependencies and environment settings for the project.
+
+
+5. Install Project Dependencies:
 ```bash
 poetry install --no-dev --no-root
 ```
@@ -61,19 +69,20 @@ docker build -t fireworksbench:v1 .
 
 2. Run the Docker container:
 ```bash
-docker run fireworksbench:v1 <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level>
+docker run fireworksbench:v1 <target_url> --duration <duration_seconds> --concurrency <concurrency_level> --qps <queries_per_second> --method <http_method> --headers '<json_headers>' --payload '<json_payload>' --timeout <timeout_seconds> --retries <retries> --output <output_file>
+
 ```
 
 ### Via CLI
 
 ##### with poetry
 ```bash
-poetry run python main.py <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level> --method <http_method> --headers <custom_headers_json> --payload <payload_json> --timeout <timeout_seconds> --retries <num_retries> --output <output_file>
+poetry run python main.py <target_url> --duration <duration_seconds> --concurrency <concurrency_level> --qps <queries_per_second> --method <http_method> --headers '<json_headers>' --payload '<json_payload>' --timeout <timeout_seconds> --retries <retries> --output <output_file>
 ```
 
 ##### without poetry
 ```bash
-python main.py <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level> --method <http_method> --headers <custom_headers_json> --payload <payload_json> --timeout <timeout_seconds> --retries <num_retries> --output <output_file>
+python main.py <target_url> --duration <duration_seconds> --concurrency <concurrency_level> --qps <queries_per_second> --method <http_method> --headers '<json_headers>' --payload '<json_payload>' --timeout <timeout_seconds> --retries <retries> --output <output_file>
 ```
 
 Replace <target_url>, <duration_seconds>, <queries_per_second>, <concurrency_level>, <http_method>, <custom_headers_json>, <payload_json>, <timeout_seconds>, <num_retries>, and <output_file> with your desired values.
