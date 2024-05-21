@@ -11,6 +11,18 @@ Fireworksbench is a http load testing tool designed to perform load testing on a
 - Runs for a specified duration
 - Prints detailed statistics after the test
 
+## Installation
+
+```bash
+git clone https://github.com/UtkarshaGupte/fireworksbench.git
+cd fireworksbench
+
+pip install poetry
+
+poetry install --no-dev --no-root
+```
+
+
 
 ## Usage
 
@@ -24,7 +36,7 @@ docker build -t fireworksbench:v1 .
 
 2. Run the Docker container:
 ```bash
-docker run fireworksbench:v1 --url <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level>
+docker run fireworksbench:v1 <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level>
 ```
 
 
@@ -32,12 +44,12 @@ docker run fireworksbench:v1 --url <target_url> --duration <duration_seconds> --
 
 ##### with poetry
 ```bash
-poetry run python main.py --url <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level>
+poetry run python main.py <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level>
 ```
 
 ##### without poetry
 ```bash
-python main.py --url <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level>
+python main.py <target_url> --duration <duration_seconds> --qps <queries_per_second> --concurrency <concurrency_level>
 ```
 
 
