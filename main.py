@@ -12,14 +12,14 @@ def main() -> None:
     parser.add_argument(
         "--duration",
         type=int,
-        default=60,
+        default=config.DEFAULT_DURATION,
         help="Test duration in seconds (default: 60)",
     )
     parser.add_argument("--qps", type=int, help="Requests per second (QPS)")
     parser.add_argument(
         "--concurrency",
         type=int,
-        default=10,
+        default=config.DEFAULT_CONCURRENCY,
         help="Number of concurrent requests (default: 10)",
     )
     parser.add_argument(

@@ -1,4 +1,5 @@
 import asyncio
+import threading
 import time
 from collections import defaultdict, deque
 from typing import Deque, Dict, Optional
@@ -9,6 +10,40 @@ from pydantic import BaseModel, Field, field_validator
 import config
 from libs.log_format import get_logger
 
+
+class FixedQPS:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __init__(self, qps):
+        self.qps = qps
+        def gen():
+            t = time.time()
+            mean_wait = 1 / self.qps
+            while True:
+                wait = mean_wait
+                t += wait
+                yield t
+
+        self.iterator = gen()
+
+    @classmethod
+    def instance(cls, qps):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = cls(qps)
+            else:
+                assert cls._instance.qps == qps
+            return cls._instance
+
+    def wait_time_till_next(self):
+        with self._lock:
+            t = next(self.iterator)
+        now = time.time()
+        if now > t:
+            return 0
+        return t - now
+    
 # Using Pydantic's BaseModel for validation and settings management
 
 class LoadTester(BaseModel):
@@ -117,19 +152,17 @@ class LoadTester(BaseModel):
         Args:
             end_time (float): The time at which to stop sending requests.
         """
-        # Calculates the delay between consecutive requests based on the desired Queries Per Second (QPS) specified by the self.qps attribute.
-        if self.qps:
-            delay = 1.0 / self.qps
-        else:
-            delay = 0
+        
+        qps_controller = FixedQPS.instance(self.qps)  
 
         # Loop until the specified end time is reached
         while time.time() < end_time:
             start_time = time.time()
 
             try:
+                await asyncio.sleep(qps_controller.wait_time_till_next())
                 # Retry loop to handle request failures
-                for _ in range(self.retries + 1):
+                for attempt in range(self.retries + 1):
                     try:
                         # Send an HTTP request to the target URL
                         async with session.request(
@@ -145,22 +178,17 @@ class LoadTester(BaseModel):
                             request_time = time.time() - start_time
 
                             await self._record_result(status_group, request_time)
+                            break
 
                     except aiohttp.ClientError as e:
                         # If all retries are exhausted
-                        if _ == self.retries:
+                        if attempt == self.retries:
                             # Raise the exception
                             raise e
                         # Wait before retrying the request
                         await asyncio.sleep(1)
             except Exception as e:
                 await self._record_error(e)
-
-            elapsed_time = time.time() - start_time
-            remaining_delay = delay - elapsed_time
-            if remaining_delay > 0:
-                # Wait for the remaining delay to maintain QPS
-                await asyncio.sleep(remaining_delay)
 
 
     async def _record_result(self, status_group: str, request_time: float) -> None:
