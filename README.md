@@ -59,6 +59,10 @@ poetry install --no-dev --no-root
 
 ## Usage
 
+### URL Format
+Please ensure that the target URL is in the format https://www.example.com or http://www.example.com and not just www.example.com. 
+For example, use https://www.amazon.in instead of www.amazon.in.
+
 ### Via Docker
 To use fireworksbench with Docker, follow these steps:
 
